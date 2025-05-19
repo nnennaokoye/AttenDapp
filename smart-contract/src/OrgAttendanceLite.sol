@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./IAttendanceNFT.sol";
 
 /**
- * @title OrgAttendance
- * @dev Manages attendance tracking, role assignment, and NFT claims for an organization
+ * @title OrgAttendanceLite
+ * @dev Lightweight implementation for managing attendance tracking, role assignment, and NFT claims
+ * Removes dependency on AccessControl to reduce contract size
  */
-contract OrgAttendance is AccessControl {
-    // Roles
+contract OrgAttendanceLite {
+    // Roles as constants
     bytes32 public constant TEACHER_ROLE = keccak256("TEACHER_ROLE");
     bytes32 public constant STUDENT_ROLE = keccak256("STUDENT_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    
+    // Simple role management
+    mapping(address => mapping(bytes32 => bool)) private _roles;
     
     // Organization info
     string public name;
@@ -48,12 +52,7 @@ contract OrgAttendance is AccessControl {
     event AttendanceClaimed(string indexed attendanceId, address indexed student, uint256 tokenId);
     
     /**
-     * @dev Constructor sets up the organization details, roles, and NFT contract
-     * @param _name Organization name
-     * @param _description Organization description
-     * @param _badgeURI URI for the organization's badge
-     * @param _attendanceNFT Address of the AttendanceNFT contract
-     * @param admin Address of the admin
+     * @dev Constructor sets up the organization details and roles
      */
     constructor(
         string memory _name,
@@ -67,7 +66,16 @@ contract OrgAttendance is AccessControl {
         badgeURI = _badgeURI;
         attendanceNFT = IAttendanceNFT(_attendanceNFT);
         
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        // Grant admin role
+        _roles[admin][ADMIN_ROLE] = true;
+    }
+    
+    /**
+     * @dev Modifier to restrict function to role holders
+     */
+    modifier onlyRole(bytes32 role) {
+        require(_roles[msg.sender][role], "Not authorized");
+        _;
     }
     
     /**
@@ -75,10 +83,10 @@ contract OrgAttendance is AccessControl {
      * @param account The address to assign the role to
      * @param role The role to assign
      */
-    function assignRole(address account, bytes32 role) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function assignRole(address account, bytes32 role) external onlyRole(ADMIN_ROLE) {
         require(role == TEACHER_ROLE || role == STUDENT_ROLE, "OrgAttendance: Invalid role");
         
-        _grantRole(role, account);
+        _roles[account][role] = true;
         
         // Track student addresses for leaderboard
         if (role == STUDENT_ROLE && studentNFTCount[account] == 0) {

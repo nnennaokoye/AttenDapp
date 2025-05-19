@@ -16,6 +16,12 @@ contract RoleManagementScript is Script {
     bytes32 public constant TEACHER_ROLE = keccak256("TEACHER_ROLE");
     bytes32 public constant STUDENT_ROLE = keccak256("STUDENT_ROLE");
 
+    // Helper function to check and log role status
+    function checkRole(OrgAttendance orgAttendance, bytes32 role, address account, string memory roleName) internal view {
+        bool hasRole = orgAttendance.hasRole(role, account);
+        console.log(string.concat("Is ", roleName, "?"), hasRole);
+    }
+    
     function run() external {
         // Get private key from environment variable
         uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(1));
@@ -38,7 +44,7 @@ contract RoleManagementScript is Script {
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
         
-        // Step 1: Deploy OrgFactory if not already deployed
+        // Step 1: Deploy OrgFactory
         OrgFactory factory = new OrgFactory();
         console.log("\nOrgFactory deployed at:", address(factory));
         
@@ -76,30 +82,17 @@ contract RoleManagementScript is Script {
         
         // Step 5: Verify roles
         console.log("\nVerifying roles...");
-        
-        // Check teacher roles
-        bool isTeacher1 = orgAttendance.hasRole(TEACHER_ROLE, teacher1);
-        bool isTeacher2 = orgAttendance.hasRole(TEACHER_ROLE, teacher2);
-        console.log("Is teacher1 a teacher?", isTeacher1);
-        console.log("Is teacher2 a teacher?", isTeacher2);
-        
-        // Check student roles
-        bool isStudent1 = orgAttendance.hasRole(STUDENT_ROLE, student1);
-        bool isStudent2 = orgAttendance.hasRole(STUDENT_ROLE, student2);
-        bool isStudent3 = orgAttendance.hasRole(STUDENT_ROLE, student3);
-        console.log("Is student1 a student?", isStudent1);
-        console.log("Is student2 a student?", isStudent2);
-        console.log("Is student3 a student?", isStudent3);
-        
-        // Check deployer is admin
-        bool isAdmin = orgAttendance.hasRole(DEFAULT_ADMIN_ROLE, deployer);
-        console.log("Is deployer an admin?", isAdmin);
+        checkRole(orgAttendance, TEACHER_ROLE, teacher1, "teacher1 a teacher");
+        checkRole(orgAttendance, TEACHER_ROLE, teacher2, "teacher2 a teacher");
+        checkRole(orgAttendance, STUDENT_ROLE, student1, "student1 a student");
+        checkRole(orgAttendance, STUDENT_ROLE, student2, "student2 a student");
+        checkRole(orgAttendance, STUDENT_ROLE, student3, "student3 a student");
+        checkRole(orgAttendance, DEFAULT_ADMIN_ROLE, deployer, "deployer an admin");
         
         // Step 6: Try to revoke a role (optional)
         console.log("\nRevoking a role...");
         orgAttendance.revokeRole(STUDENT_ROLE, student3);
-        bool isStillStudent = orgAttendance.hasRole(STUDENT_ROLE, student3);
-        console.log("Is student3 still a student after revocation?", isStillStudent);
+        checkRole(orgAttendance, STUDENT_ROLE, student3, "student3 still a student after revocation");
         
         vm.stopBroadcast();
     }

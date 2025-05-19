@@ -6,6 +6,9 @@ pragma solidity ^0.8.13;
  * @dev Interface for the AttendanceNFT contract
  */
 interface IAttendanceNFT {
+    // Minter role constant needed for proxy implementation
+    function MINTER_ROLE() external view returns (bytes32);
+    
     /**
      * @dev Mints a new attendance NFT for a session
      * @param to The address to mint the NFT to
@@ -33,4 +36,11 @@ interface IAttendanceNFT {
      * @param tokenId The token ID
      */
     function transferFrom(address from, address to, uint256 tokenId) external;
+    
+    /**
+     * @dev Grants a role to an account
+     * @param role The role to grant
+     * @param account The account to grant the role to
+     */
+    function grantRole(bytes32 role, address account) external;
 }
