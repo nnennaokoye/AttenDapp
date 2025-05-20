@@ -23,6 +23,7 @@ contract AttendDappTest is Test {
     string public sessionTitle = "Python Workshop";
     string public attendanceId = "ABC123";
     
+    
     function setUp() public {
         // Deploy factory contract
         vm.startPrank(admin);
@@ -179,6 +180,7 @@ contract AttendDappTest is Test {
                 foundStudent2 = true;
             }
         }
+
         
         assertTrue(foundStudent1);
         assertTrue(foundStudent2);
